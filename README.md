@@ -2,19 +2,25 @@
 
 A Python package for analyzing electrocardiogram (ECG) signals and calculating heart rate variability (HRV) metrics.
 
-## How to run instructions
+## Installation Instructions 
 1. Install the MIT-BIH Arrhythmia Database 
-2. Install package:
     ```
    cd ECG-HRV-Analysis/
-   pip install .
+   bash download_data.sh 
     ```
-3. Run
+
+2. Install package:
     ```
-   python3 main.py 
-   ``` 
-Run the main.py script to perform ECG analysis and calculate HRV metrics
-Use the plots.ipynb notebook to generate plots of the HRV results
+   python -m pip install .[dev]
+    ``` 
+
+## Run Experiments
+
+* Run the notebook ` run.ipynb ` to perform experiments and get the corresponding plots. 
+
+* Code can be found  [here](https://github.com/Maria-Iosif/ECG-HRV-Analysis/tree/main/ecg_hrv_analysis).
+
+
 
 ## References 
    1. MIT-BIH Arrhythmia Database v1.0.0. (n.d.). MIT-BIH Arrhythmia Database v1.0.0. 

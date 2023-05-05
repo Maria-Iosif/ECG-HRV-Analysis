@@ -3,5 +3,5 @@ numpy
 pandas
 scipy
 seaborn
-sklearn
+scikit-learn
 wfdb

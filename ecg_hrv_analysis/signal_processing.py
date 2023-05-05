@@ -1,10 +1,10 @@
 import glob
-import os
 import pathlib
 import sklearn.metrics
 import numpy as np
 import wfdb
 from scipy import signal
+
 
 
 def data_dict(data_path):
@@ -96,7 +96,7 @@ def mwi(ecg, fs):
 
 
 def r_peak_detection(ecg_detection, fs):
-    min_distance = int(0.083 * fs)
+    min_distance = int(0.15 * fs)
 
     signal_peaks = [0]
     noise_peaks = []
@@ -207,7 +207,7 @@ def rpeaks_extr(pat, an, low, high):
 
         rpeaks_dict[i][rpeaks_1]
 
-        peaks_1 = find_peaks(ecg_filt_1, distance=150)[0]
+        peaks_1 = signal.find_peaks(ecg_filt_1, distance=150)[0]
 
         # Calculate false positives and false negatives
         tp = 0
@@ -259,10 +259,3 @@ def rpeaks_extr(pat, an, low, high):
 
     return rpeaks_dict, fpfn_R_an_dict, fpfn_R_R_dict
 
-def mse(r_an, r_peaks):
-    """"
-    mse(y_true, y_predicted)
-    """
-    mse = sklearn.metrics.mean_squared_error(r_an,r_peaks)
-
-    return mse 

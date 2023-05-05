@@ -1,11 +1,12 @@
 import numpy as np
 
 
-def timedomain(peaks):
-    rr = nn_intervals(peaks)
-    results = {}
+def timedomain(peaks, sampling_rate = 360):
 
-    hr = 60000 / rr
+    rr = nn_intervals(peaks)
+    hr = calculate_heart_rate(peaks,sampling_rate = 360)
+
+    results = {}
 
     results["Mean NN (ms)"] = np.mean(rr)
     results["STD NN/SDNN (ms)"] = np.std(rr)
@@ -15,7 +16,7 @@ def timedomain(peaks):
     results["Max HR (beats/min)"] = np.max(hr)
     results["RMSSD (ms)"] = rmssd_measure(peaks)
     results["SDNN"] = sdnn_measure(peaks)
-    results["SDANN"] = sdann_measure(peaks)
+    # results["SDANN"] = sdann_measure(peaks)
     # results['NNxx'] = np.sum(np.abs(np.diff(rr)) > 50)*1
     # results['pNNxx (%)'] = 100 * np.sum((np.abs(np.diff(rr)) > 50)*1) / len(rr)
 
@@ -24,6 +25,46 @@ def timedomain(peaks):
         print("- %s: %.2f" % (k, v))
 
     return
+
+def calculate_heart_rate(peaks, sampling_rate):
+  """
+  Calculate heart rate from R-R intervals in seconds.
+
+  Args:
+  rr_intervals (list of floats): list of R-R intervals in seconds
+  sampling_rate (float): sampling rate used to acquire ECG signal (in Hz)
+
+  Returns:
+  float: the average heart rate in beats per minute
+  """
+
+  period = 1/sampling_rate
+  rs = [peaks[i]*period*1000 for i in range(len(peaks))]
+  nn_intervals = np.diff(rs)
+  hr = 60000/nn_intervals
+
+  return hr
+
+def mean_heart_rate(r_p_dict ,sampling_rate=360):
+    """
+    Input: A dictionary with r-peaks
+    Sampling rate (Hz) (default 360Hz)
+
+    Output: the mean Heart rate for each individual
+    """
+    :param r_p_dict:
+    :param sampling_rate:
+    :return:
+
+    means = np.zeros(len(r_p_dict))
+    for i in range(len(r_p_dict)):
+
+    hr = calculate_heart_rate(r_p_dict[i][0], sampling_rate)
+    hr_avg = np.mean(hr)
+
+    means[i] = hr_avg
+
+    return means
 
 
 def nn_intervals(peaks):
@@ -98,3 +139,26 @@ def rmssd_measure(peaks):
     rmssd = np.sqrt(rmssd / len(nn_dif))
 
     return rmssd
+
+
+def mean_for_an():
+    means = []
+    sampling_rate = 360
+    for i in range(len(an)):
+        hr = calculate_heart_rate(an[i].get('sample'), sampling_rate)
+        mean_hr = np.mean(hr)
+
+        means.append(mean_hr)
+    return means
+
+def avg_fpfn(fpfn):
+  avg_dict = {'tp':[], 'fp':[], 'fn':[]}
+
+  for i in range(len(pat)):
+
+    total = np.sum(list(fpfn[i].values()))
+    for j in ['tp', 'fp', 'fn']:
+      avg_val = (fpfn[i][j][0])/total
+      avg_dict[j].append(avg_val)
+
+  return avg_dict

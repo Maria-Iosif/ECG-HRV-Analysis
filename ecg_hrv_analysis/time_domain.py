@@ -1,10 +1,9 @@
 import numpy as np
 
 
-def timedomain(peaks, sampling_rate = 360):
-
+def timedomain(peaks, sampling_rate=360):
     rr = nn_intervals(peaks)
-    hr = calculate_heart_rate(peaks,sampling_rate = 360)
+    hr = calculate_heart_rate(peaks, sampling_rate=360)
 
     results = {}
 
@@ -26,44 +25,53 @@ def timedomain(peaks, sampling_rate = 360):
 
     return
 
+
 def calculate_heart_rate(peaks, sampling_rate):
-  """
-  Calculate heart rate from R-R intervals in seconds.
+    """
+    Calculate heart rate from R-R intervals in seconds.
 
-  Args:
-  rr_intervals (list of floats): list of R-R intervals in seconds
-  sampling_rate (float): sampling rate used to acquire ECG signal (in Hz)
+    Args:
+    rr_intervals (list of floats): list of R-R intervals in seconds
+    sampling_rate (float): sampling rate used to acquire ECG signal (in Hz)
 
-  Returns:
-  float: the average heart rate in beats per minute
-  """
+    Returns:
+    float: the average heart rate in beats per minute
+    """
 
-  period = 1/sampling_rate
-  rs = [peaks[i]*period*1000 for i in range(len(peaks))]
-  nn_intervals = np.diff(rs)
-  hr = 60000/nn_intervals
+    period = 1 / sampling_rate
+    rs = [peaks[i] * period * 1000 for i in range(len(peaks))]
+    nn_intervals = np.diff(rs)
+    hr = 60000 / nn_intervals
 
-  return hr
+    return hr
 
-def mean_heart_rate(r_p_dict ,sampling_rate=360):
+
+def mean_heart_rate(r_p_dict, sampling_rate=360):
     """
     Input: A dictionary with r-peaks
     Sampling rate (Hz) (default 360Hz)
 
     Output: the mean Heart rate for each individual
     """
-    :param r_p_dict:
-    :param sampling_rate:
-    :return:
 
     means = np.zeros(len(r_p_dict))
     for i in range(len(r_p_dict)):
+        hr = calculate_heart_rate(r_p_dict[i][0], sampling_rate)
+        hr_avg = np.mean(hr)
 
-    hr = calculate_heart_rate(r_p_dict[i][0], sampling_rate)
-    hr_avg = np.mean(hr)
+        means[i] = hr_avg
 
-    means[i] = hr_avg
+    return means
 
+
+def mean_hr_an(an):
+    means = []
+    sampling_rate = 360
+    for i in range(len(an)):
+        hr = calculate_heart_rate(an[i].get("sample"), sampling_rate)
+        mean_hr = np.mean(hr)
+
+        means.append(mean_hr)
     return means
 
 
@@ -141,24 +149,64 @@ def rmssd_measure(peaks):
     return rmssd
 
 
-def mean_for_an():
+def mean_for_an(annotations):
     means = []
     sampling_rate = 360
-    for i in range(len(an)):
-        hr = calculate_heart_rate(an[i].get('sample'), sampling_rate)
+    for i in range(len(annotations)):
+        hr = calculate_heart_rate(an[i].get("sample"), sampling_rate)
         mean_hr = np.mean(hr)
 
         means.append(mean_hr)
     return means
 
-def avg_fpfn(fpfn):
-  avg_dict = {'tp':[], 'fp':[], 'fn':[]}
 
-  for i in range(len(pat)):
+def avg_fpfn(fpfn, pat):
+    avg_dict = {"tp": [], "fp": [], "fn": []}
 
-    total = np.sum(list(fpfn[i].values()))
-    for j in ['tp', 'fp', 'fn']:
-      avg_val = (fpfn[i][j][0])/total
-      avg_dict[j].append(avg_val)
+    for i in range(len(pat)):
+        total = np.sum(list(fpfn[i].values()))
+        for j in ["tp", "fp", "fn"]:
+            avg_val = (fpfn[i][j][0]) / total
+            avg_dict[j].append(avg_val)
 
-  return avg_dict
+    return avg_dict
+
+
+def healthy_not(an, percentage):
+    # Create a list of indices corresponding to healthy individuals
+    healthy_idx = [
+        i
+        for i in range(len(an))
+        if (an[i].get("symbol").count("N")) >= percentage * len(an[i].get("symbol"))
+    ]
+
+    # Create a list of indices corresponding to unhealthy individuals
+    unhealthy_idx = [i for i in range(len(an)) if i not in healthy_idx]
+
+    return healthy_idx, unhealthy_idx
+
+
+def split_healthy_not(rpeaks_dict, an, percentage, sampling_rate=360):
+    heal, nonheal = healthy_not(an, percentage)
+    healthy = [rpeaks_dict[i][0] for i in heal]
+    unhealthy = [rpeaks_dict[i][0] for i in nonheal]
+
+    healthy_dict = {"hr": [], "sdnn": [], "rmssd": []}
+    period = 1 / sampling_rate
+    for i in range(len(healthy)):
+        peaks = healthy[i]
+        Rrss = [peaks[i] * period * 1000 for i in range(len(peaks))]
+        healthy_dict["hr"].append(calculate_heart_rate(peaks, sampling_rate))
+        healthy_dict["sdnn"].append(sdnn_measure(Rrss))
+        healthy_dict["rmssd"].append(rmssd_measure(Rrss))
+
+    unhealthy_dict = {"hr": [], "sdnn": [], "rmssd": []}
+    period = 1 / sampling_rate
+    for i in range(len(unhealthy)):
+        peaks = unhealthy[i]
+        Rrss = [peaks[i] * period * 1000 for i in range(len(peaks))]
+        unhealthy_dict["hr"].append(calculate_heart_rate(peaks, sampling_rate))
+        unhealthy_dict["sdnn"].append(sdnn_measure(Rrss))
+        unhealthy_dict["rmssd"].append(rmssd_measure(Rrss))
+
+    return healthy_dict, unhealthy_dict

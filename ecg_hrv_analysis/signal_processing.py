@@ -6,7 +6,6 @@ import wfdb
 from scipy import signal
 
 
-
 def data_dict(data_path):
     patients = [
         pathlib.Path(p).name.replace(".hea", "")
@@ -184,7 +183,7 @@ def Pan_Tompkins(ecg, fs, f_low, f_high):
 
 
 def rpeaks_extr(pat, an, low, high):
-    def avg_fpfn(fpfn):
+    def avg_fpfn(fpfn, pat):
         avg_dict = {"tp": [], "fp": [], "fn": []}
 
         for i in range(len(pat)):
@@ -205,7 +204,7 @@ def rpeaks_extr(pat, an, low, high):
         fs = pat[i].get("fs")
         ecg_filt_1, rpeaks_1 = Pan_Tompkins(ecg_1, fs, low, high)
 
-        rpeaks_dict[i][rpeaks_1]
+        rpeaks_dict[i].append(rpeaks_1)
 
         peaks_1 = signal.find_peaks(ecg_filt_1, distance=150)[0]
 
@@ -258,4 +257,3 @@ def rpeaks_extr(pat, an, low, high):
         fpfn_R_R_dict[i]["fn"].append(fn)
 
     return rpeaks_dict, fpfn_R_an_dict, fpfn_R_R_dict
-

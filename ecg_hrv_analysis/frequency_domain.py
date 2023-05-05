@@ -4,25 +4,44 @@ from scipy.interpolate import interp1d
 from scipy.integrate import trapz
 from ecg_hrv_analysis.time_domain import *
 
-def frequencydomain(rr_interpolated):
-    results, fxx, pxx = frequency_domain(rr_interpolated)
+
+def print_fr_mes(r_peaks):
+    rr_interpolated, results, fxx, pxx = frequency_domain(r_peaks)
     print("Frequency domain metrics:")
     for k, v in results.items():
         print("- %s: %.2f" % (k, v))
 
-    return
 
-
-def frequency_domain(rr_interpolated, rrs,fs=4, sampling_rate = 360):
+def interpolate(r_peaks, sampling_rate=360):
     period = 1 / sampling_rate
-    Rrss = [rrs[i] * period * 1000 for i in range(len(rrs))]
+    Rrss = [r_peaks[i] * period * 1000 for i in range(len(r_peaks))]
     rr_manual = nn_intervals(Rrss)
 
     x = np.cumsum(rr_manual) / 1000
-    f = interp1d(x, rr_manual, kind='cubic')
+    f = interp1d(x, rr_manual, kind="cubic")
+
+    steps = 1 / 4
+
+    # now we can sample from interpolation function
+    xx = np.arange(1, np.max(x), steps)
+    rr_interpolated = f(xx)
+    xx = np.arange(1, np.max(x), steps)
+    rr_interpolated = f(xx)
+
+    return x, rr_manual, xx, rr_interpolated
+
+
+def frequency_domain(r_peaks, sampling_rate=360):
+    period = 1 / sampling_rate
+    Rrss = [r_peaks[i] * period * 1000 for i in range(len(r_peaks))]
+    rr_manual = nn_intervals(Rrss)
+
+    x = np.cumsum(rr_manual) / 1000
+    f = interp1d(x, rr_manual, kind="cubic")
 
     # sample rate for interpolation
-    steps = 1 / sampling_rate
+    fs = 4
+    steps = 1 / fs
 
     # now we can sample from interpolation function
     xx = np.arange(1, np.max(x), steps)
@@ -31,12 +50,12 @@ def frequency_domain(rr_interpolated, rrs,fs=4, sampling_rate = 360):
     # Estimate the spectral density using Welch's method
     fxx, pxx = signal.welch(x=rr_interpolated, fs=fs)
 
-    '''
+    """
     Segement found frequencies in the bands 
      - Very Low Frequency (VLF): 0-0.04Hz 
      - Low Frequency (LF): 0.04-0.15Hz 
      - High Frequency (HF): 0.15-0.4Hz
-    '''
+    """
     cond_vlf = (fxx >= 0) & (fxx < 0.04)
     cond_lf = (fxx >= 0.04) & (fxx < 0.15)
     cond_hf = (fxx >= 0.15) & (fxx < 0.4)
@@ -58,17 +77,16 @@ def frequency_domain(rr_interpolated, rrs,fs=4, sampling_rate = 360):
     hf_nu = 100 * hf / (lf + hf)
 
     results = {}
-    results['Power VLF (ms2)'] = vlf
-    results['Power LF (ms2)'] = lf
-    results['Power HF (ms2)'] = hf
-    results['Power Total (ms2)'] = total_power
+    results["Power VLF (ms2)"] = vlf
+    results["Power LF (ms2)"] = lf
+    results["Power HF (ms2)"] = hf
+    results["Power Total (ms2)"] = total_power
 
-    results['LF/HF'] = (lf / hf)
-    results['Peak VLF (Hz)'] = peak_vlf
-    results['Peak LF (Hz)'] = peak_lf
-    results['Peak HF (Hz)'] = peak_hf
+    results["LF/HF"] = lf / hf
+    results["Peak VLF (Hz)"] = peak_vlf
+    results["Peak LF (Hz)"] = peak_lf
+    results["Peak HF (Hz)"] = peak_hf
 
-    results['Fraction LF (nu)'] = lf_nu
-    results['Fraction HF (nu)'] = hf_nu
+    results["Fraction LF (nu)"] = lf_nu
+    results["Fraction HF (nu)"] = hf_nu
     return rr_interpolated, results, fxx, pxx
-

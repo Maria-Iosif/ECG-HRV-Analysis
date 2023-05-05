@@ -1,5 +1,7 @@
 matplotlib
 numpy
+pandas
 scipy
 seaborn
+sklearn
 wfdb
